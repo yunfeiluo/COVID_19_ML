@@ -5,11 +5,11 @@ import pickle
 import matplotlib.pyplot as plt
 
 from src.model.mlp import mlp_linear
-import src.model.linear_feature_extraction as extractor
+import src.model.autoencoder as autoencoder
 
 def compute_MAE(y_pred, y_true):
-    diff = np.array(y_pred) - np.array(y_true)
-    return sum(np.abs(diff)) / len(diff)
+    diff = np.abs(np.array(y_pred) - np.array(y_true))
+    return np.sum(diff) / len(diff)
 
 def model_eval(model, feature_generators, test_samples, true_labels, check, regions, last_out, labels, train_len, covars_train, covars_test):
     '''
@@ -33,15 +33,15 @@ def model_eval(model, feature_generators, test_samples, true_labels, check, regi
         for j in range(len(test_labels['confirmed'][i])):
             # generate features by feature generators
             confirmed_input = torch.Tensor(test_samples['confirmed'][i]).float()
-            confirmed = feature_generators['confirmed'](confirmed_input).detach().numpy()[0]
+            confirmed = [i for i in feature_generators['confirmed'](confirmed_input).detach().numpy()]
 
             death_input = torch.Tensor(test_samples['death'][i]).float()
-            death = feature_generators['death'](death_input).detach().numpy()[0]
+            death = [i for i in feature_generators['death'](death_input).detach().numpy()]
 
             recovered_input = torch.Tensor(test_samples['recovered'][i]).float()
-            recovered = feature_generators['recovered'](recovered_input).detach().numpy()[0]
+            recovered = [i for i in feature_generators['recovered'](recovered_input).detach().numpy()]
 
-            input_ = [confirmed, death, recovered] + covars_test[i] # concatenate covariates
+            input_ = confirmed + death + recovered + covars_test[i] # concatenate covariates
             input_ = torch.Tensor(input_).float()
 
             # make prediction
@@ -87,6 +87,10 @@ def model_eval(model, feature_generators, test_samples, true_labels, check, regi
             for ax in axs.flat:
                 ax.set(xlabel='Days->', ylabel='Number of cases')
             plt.show()
+    
+    print('confirmed err', confirmed_err / len(test_samples['confirmed']))
+    print('death err', death_err / len(test_samples['confirmed']))
+    print('recovered err', recovered_err / len(test_samples['confirmed']))
     return confirmed_err / len(test_samples['confirmed']), death_err / len(test_samples['confirmed']), recovered_err / len(test_samples['confirmed'])
         
 
@@ -95,14 +99,14 @@ def train_feature_generator(train_samples, train_labels, ts_name):
     feature_generators = dict()
     for ts in ts_name:
         print('generator for', ts)
-        feature_generator = extractor.train_mlp_linear(train_samples[ts], train_labels[ts])
+        feature_generator = autoencoder.train_dense_mlp_autoencoder(train_samples[ts])
         feature_generators[ts] = feature_generator
 
-        # # check error of the generator
-        # err = extractor.model_eval(feature_generator, test_samples[ts], test_labels[ts], test_len, extractor.mean_square_error, train_samples[ts], train_labels[ts], train_len, regions, check)
-        # print('err', err)
     with open('src/model/feature_generators.pkl', 'wb') as f:
         pickle.dump(feature_generators, f)
+    
+    print('###### feature generator training complete ###########')
+    exit()
     #return feature_generator
 
 if __name__ == '__main__':    
@@ -169,8 +173,8 @@ if __name__ == '__main__':
                 covars_test.append(covariates[region.split('_')[0]])
     #####################################################################################################################################
 
-    ## train feature extractor ##########################################################################################################
-    train_feature_generator(train_samples, train_labels, ts_name)
+    ## train feature generator ##########################################################################################################
+    #train_feature_generator(train_samples, train_labels, ts_name)
     feature_generators = None
     with open('src/model/feature_generators.pkl', 'rb') as f:
         feature_generators = pickle.load(f)
@@ -187,8 +191,8 @@ if __name__ == '__main__':
     for ts in train_samples:
         for i in range(len(train_samples[ts])):
             input_seq = torch.Tensor(train_samples[ts][i]).float()
-            new_feature = feature_generators[ts](input_seq).detach().numpy()[0]
-            samples[i].append(new_feature)
+            new_feature = [i for i in feature_generators[ts](input_seq).detach().numpy()]
+            samples[i] += new_feature
             labels[i].append(train_labels[ts][i])
     for i in range(len(samples)):
         samples[i] += covars_train[i]
@@ -204,8 +208,8 @@ if __name__ == '__main__':
     # hyper-param
     hidden_size = 64
     output_size = 3
-    step_size = 10 ** -2
-    regu_lam = 10 ** -3
+    step_size = 10 ** -3
+    regu_lam = 10 ** -4
     epochs = 1000
 
     # build model
@@ -214,6 +218,7 @@ if __name__ == '__main__':
     opt = optim.Adam(params=model.parameters(), lr=step_size, weight_decay=regu_lam)
 
     last_out = None
+    min_loss = np.inf
     # training
     for epoch in range(epochs):
         model.zero_grad()
@@ -222,7 +227,7 @@ if __name__ == '__main__':
         loss.backward()
         opt.step()
 
-        if epoch + 1 == epochs: # last epoch
+        if loss.item() < min_loss:
             last_out = out.detach().numpy()
         
         if epoch % 10 == 0:
@@ -241,8 +246,5 @@ if __name__ == '__main__':
             true_labels[i].append(test_labels[ts][i])
     
     confirmed_err, death_err, recovered_err = model_eval(model, feature_generators, test_samples, true_labels, check, regions, last_out, labels, train_len, covars_train, covars_test)
-    print('confirmed err', confirmed_err)
-    print('death err', death_err)
-    print('recovered err', recovered_err)
 
     #####################################################################################################################################
