@@ -23,11 +23,11 @@ def get_feature(df, col_name, countries, feature):
 # main function
 def run():
     # open train file
-    train = pd.read_csv('data/train.csv')
+    train = pd.read_csv('data/jhu/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_global.csv')
     # get country names
-    features = dict()
+    features = dict() # map: country -> [f1, f2, f3]
     droped_countries = list()
-    countries = sorted(get_countries(train, 'Country_Region'))
+    countries = sorted(get_countries(train, 'Country/Region'))
 
     # get GDP
     gdp_population = pd.read_csv('data/features/gdp_population.csv')
@@ -73,18 +73,18 @@ def run():
         countries.remove(country)
     
     print('Num of droped contries', len(droped_countries))
-    # for country in droped_countries:
-    #     print(country)
+    for country in droped_countries:
+        print(country)
 
     # # generate features write to content
-    content = '国家 | 总GDP | 人均GDP | 人口密度 | 人均寿命\n'
-    for country in countries:
-        content += '{} {} {} {} {}\n'.format(country, features[country]['total_GDP'], features[country]['GDP_percapita'], features[country]['pop_density'], features[country]['life_expectancy'])
+    # content = '国家 | 总GDP | 人均GDP | 人口密度 | 人均寿命\n'
+    # for country in countries:
+    #     content += '{} {} {} {} {}\n'.format(country, features[country]['total_GDP'], features[country]['GDP_percapita'], features[country]['pop_density'], features[country]['life_expectancy'])
 
-    # write to file
-    with open('src/feature_engineering/features.txt', 'w+') as f:
-        print('write to file... ' + 'src/feature_engineering/features.txt')
-        f.write(content)
+    # # write to file
+    # with open('src/feature_engineering/features.txt', 'w+') as f:
+    #     print('write to file... ' + 'src/feature_engineering/features.txt')
+    #     f.write(content)
 
     return features
 
@@ -92,6 +92,11 @@ def run():
 if __name__ == '__main__':
     features = run()
 
+    for country in features:
+        features[country] = [features[country][i] for i in features[country]]
+
     # write to pickle file
     with open('src/feature_engineering/features.pkl', 'wb') as f:
         pickle.dump(features, f)
+    
+    print(len(features))
