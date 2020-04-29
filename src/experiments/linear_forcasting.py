@@ -11,7 +11,7 @@ def compute_MAE(y_pred, y_true):
     diff = np.array(y_pred) - np.array(y_true)
     return sum(np.abs(diff)) / len(diff)
 
-def model_eval(model, feature_generators, test_samples, true_labels, check, covariates, regions, last_out, labels, train_len):
+def model_eval(model, feature_generators, test_samples, true_labels, check, regions, last_out, labels, train_len, covars_train, covars_test):
     '''
     @param model: prediction model
     @param feature_generators
@@ -41,7 +41,7 @@ def model_eval(model, feature_generators, test_samples, true_labels, check, cova
             recovered_input = torch.Tensor(test_samples['recovered'][i]).float()
             recovered = feature_generators['recovered'](recovered_input).detach().numpy()[0]
 
-            input_ = [confirmed, death, recovered] + covariates # concatenate covariates
+            input_ = [confirmed, death, recovered] + covars_test[i] # concatenate covariates
             input_ = torch.Tensor(input_).float()
 
             # make prediction
@@ -105,12 +105,26 @@ def train_feature_generator(train_samples, train_labels, ts_name):
         pickle.dump(feature_generators, f)
     #return feature_generator
 
-if __name__ == '__main__':
+if __name__ == '__main__':    
     ## read and split data #######################################################################################
     data = None
     with open('src/feature_engineering/time_series.pkl', 'rb') as f:
         data = pickle.load(f)
-    
+
+    # wash data
+    covariates = None
+    with open('src/feature_engineering/features.pkl', 'rb') as f:
+        covariates = pickle.load(f)
+    countries = [i for i in covariates]
+    droped = list()
+    for region in data:
+        country = region.split('_')[0]
+        if country not in countries:
+            droped.append(region)
+    for region in droped:
+        del data[region]
+
+    # split data    
     look_back = 14
     test_len = 7
     train_len = -1
@@ -125,12 +139,16 @@ if __name__ == '__main__':
     check = ['China_Beijing', 'China_Chongqing', 'China_Sichuan', 'China_Hainan', 'US_nan', 'Russia_nan', 'Japan_nan', 'Korea, South_nan']
     #check = []
 
+    covars_train = list()
+    covars_test = list()
+
     for i in range(3):
         for region in data:
             # if 'China' not in region:
             #     continue
             x = data[region][i]
-            regions.append(region)
+            if i == 0:
+                regions.append(region)
 
             # split data
             train_x = x[:len(x)-test_len]
@@ -141,10 +159,14 @@ if __name__ == '__main__':
             for j in range(len(train_x) - 1 - look_back):
                 train_samples[ts_name[i]].append(train_x[j:j+look_back])
                 train_labels[ts_name[i]].append(train_x[j+look_back])
+                if i == 0:
+                    covars_train.append(covariates[region.split('_')[0]])
             
             # append test data
             test_samples[ts_name[i]].append(train_x[len(train_x) - look_back:])
             test_labels[ts_name[i]].append([i for i in test_x])
+            if i == 0:
+                covars_test.append(covariates[region.split('_')[0]])
     #####################################################################################################################################
 
     ## train feature extractor ##########################################################################################################
@@ -157,9 +179,6 @@ if __name__ == '__main__':
 
     ## concatenate covariates ###########################################################################################################
     print('######## concatenate features... ##############')
-    covariates = None
-    with open('src/feature_engineering/features.pkl', 'rb') as f:
-        covariates = pickle.load(f)
 
     samples = [list() for i in range(len(train_samples['confirmed']))]
     labels = [list() for i in range(len(train_samples['confirmed']))]
@@ -171,7 +190,8 @@ if __name__ == '__main__':
             new_feature = feature_generators[ts](input_seq).detach().numpy()[0]
             samples[i].append(new_feature)
             labels[i].append(train_labels[ts][i])
-
+    for i in range(len(samples)):
+        samples[i] += covars_train[i]
     #####################################################################################################################################
 
     ## Train linear models ##############################################################################################################
@@ -220,7 +240,7 @@ if __name__ == '__main__':
         for i in range(len(test_labels[ts])):
             true_labels[i].append(test_labels[ts][i])
     
-    confirmed_err, death_err, recovered_err = model_eval(model, feature_generators, test_samples, true_labels, check, [], regions, last_out, labels, train_len)
+    confirmed_err, death_err, recovered_err = model_eval(model, feature_generators, test_samples, true_labels, check, regions, last_out, labels, train_len, covars_train, covars_test)
     print('confirmed err', confirmed_err)
     print('death err', death_err)
     print('recovered err', recovered_err)
