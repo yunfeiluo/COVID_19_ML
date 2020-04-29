@@ -1,5 +1,7 @@
 import pandas as pd
 import pickle
+from sklearn import preprocessing
+import numpy as np
 
 ## helper functions #####################################################
 def get_countries(df, col_name):
@@ -94,6 +96,10 @@ if __name__ == '__main__':
 
     for country in features:
         features[country] = [features[country][i] for i in features[country]]
+
+    for country in features:
+        features[country] = [i for i in preprocessing.normalize([np.array(features[country])])[0]]
+        print(features[country])
 
     # write to pickle file
     with open('src/feature_engineering/features.pkl', 'wb') as f:
