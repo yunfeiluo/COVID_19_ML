@@ -10,7 +10,7 @@ class mlp_linear(nn.Module):
             nn.Linear(input_size, hidden_size),
             nn.ReLU(),
             nn.Linear(hidden_size, num_classes),
-            #nn.ReLU()
+            nn.ReLU(),
         )
 
     def forward(self, x):
