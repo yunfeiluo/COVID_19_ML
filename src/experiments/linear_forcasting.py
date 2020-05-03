@@ -26,11 +26,19 @@ def model_eval(model, feature_generators, test_samples, true_labels, check, regi
     death_err = 0
     recovered_err = 0
 
+    y_trues = list()
+    y_preds = list()
+    future_preds = list()
+    x_trues = list()
+    x_preds = list()
+
     for i in range(len(test_samples['confirmed'])):
         y_true = true_labels[i]
         y_pred = [list() for i in range(3)]
+        future_pred = [list() for i in range(3)]
+        pred_len = 7
 
-        for j in range(len(test_labels['confirmed'][i])):
+        for j in range(len(test_labels['confirmed'][i]) + pred_len):
             # generate features by feature generators
             confirmed_input = torch.Tensor(test_samples['confirmed'][i]).float()
             confirmed = [i for i in feature_generators['confirmed'](confirmed_input).detach().numpy()]
@@ -46,8 +54,12 @@ def model_eval(model, feature_generators, test_samples, true_labels, check, regi
 
             # make prediction
             pred = model(input_).detach().numpy()
-            for k in range(3):
-                y_pred[k].append(pred[k])
+            if j >= len(test_labels['confirmed'][i]):
+                for k in range(3):
+                    future_pred[k].append(pred[k])
+            else:
+                for k in range(3):
+                    y_pred[k].append(pred[k])
 
             test_samples['confirmed'][i].append(pred[0])
             test_samples['confirmed'][i] = test_samples['confirmed'][i][1:]
@@ -63,6 +75,11 @@ def model_eval(model, feature_generators, test_samples, true_labels, check, regi
         death_err += compute_MAE(y_pred[1], y_true[1])
         recovered_err += compute_MAE(y_pred[2], y_true[2])
         
+        # store result
+        y_trues.append(y_true)
+        y_preds.append(y_pred)
+        future_preds.append(future_pred)
+
         # visualize
         if regions[i] in check:
             train_res = last_out[i*train_len:i*train_len + train_len]
@@ -73,24 +90,30 @@ def model_eval(model, feature_generators, test_samples, true_labels, check, regi
             for k in range(3):
                 x_pred.append([i[k] for i in train_res])
                 x_true.append([i[k] for i in train_label])
+            
+            # store result
+            x_preds.append(x_pred)
+            x_trues.append(x_true)
 
-            time = [i for i in range(len(x_pred[0]) + len(y_true[0]))]
-            fig, axs = plt.subplots(1, 3)
-            titles = ['confirmed', 'death', 'recovered']
-            for j in range(3):
-                axs[j].plot(time[len(time) - len(y_true[j]):], y_true[j], label='True_new_cases', c='b')
-                axs[j].plot(time[:len(time) - len(y_true[j])], x_true[j], c='b')
-                axs[j].plot(time[len(time) - len(y_pred[j]):], y_pred[j], label='test_pred', c='r')
-                axs[j].plot(time[:len(time) - len(y_true[j])], x_pred[j], label='train_pred', c='g')
-                axs[j].legend()
-                axs[j].set_title('New '+ titles[j] + 'cases, in ' + regions[i])
-            for ax in axs.flat:
-                ax.set(xlabel='Days->', ylabel='Number of cases')
-            plt.show()
+            # # plot
+            # time = [i for i in range(len(x_pred[0]) + len(y_true[0]) + pred_len)]
+            # fig, axs = plt.subplots(1, 3)
+            # titles = ['confirmed', 'death', 'recovered']
+            # for j in range(3):
+            #     axs[j].plot(time[len(time) - pred_len - len(y_true[j]):len(time) - pred_len], y_true[j], label='True_new_cases', c='b')
+            #     axs[j].plot(time[:len(time) - pred_len - len(y_true[j])], x_true[j], c='b')
+            #     axs[j].plot(time[len(time) - pred_len - len(y_pred[j]):len(time) - pred_len], y_pred[j], label='test_pred', c='r')
+            #     axs[j].plot(time[:len(time) - pred_len - len(y_true[j])], x_pred[j], label='train_pred', c='g')
+            #     axs[j].plot(time[len(time) - pred_len:], future_pred[j], label='future_pred', c='y')
+            #     axs[j].legend()
+            #     axs[j].set_title('New '+ titles[j] + ' cases, in ' + regions[i])
+            # for ax in axs.flat:
+            #     ax.set(xlabel='Days->', ylabel='Number of cases')
+            # plt.show()
     
-    print('confirmed err', confirmed_err / len(test_samples['confirmed']))
-    print('death err', death_err / len(test_samples['confirmed']))
-    print('recovered err', recovered_err / len(test_samples['confirmed']))
+    with open('src/experiments/pred_check.pkl', 'wb') as f:
+        pickle.dump((y_preds, y_trues, future_preds, x_preds, x_trues, pred_len), f)
+    
     return confirmed_err / len(test_samples['confirmed']), death_err / len(test_samples['confirmed']), recovered_err / len(test_samples['confirmed'])
         
 
@@ -140,8 +163,6 @@ if __name__ == '__main__':
     ts_name = ['confirmed', 'death', 'recovered']
 
     regions = list()
-    check = ['China_Beijing', 'China_Chongqing', 'China_Sichuan', 'China_Hainan', 'US_nan', 'Russia_nan', 'Japan_nan', 'Korea, South_nan']
-    #check = []
 
     covars_train = list()
     covars_test = list()
@@ -171,6 +192,7 @@ if __name__ == '__main__':
             test_labels[ts_name[i]].append([i for i in test_x])
             if i == 0:
                 covars_test.append(covariates[region.split('_')[0]])
+    
     #####################################################################################################################################
 
     ## train feature generator ##########################################################################################################
@@ -196,6 +218,14 @@ if __name__ == '__main__':
             labels[i].append(train_labels[ts][i])
     for i in range(len(samples)):
         samples[i] += covars_train[i]
+    
+    # for test
+    true_labels = [list() for i in range(len(test_labels['confirmed']))] # [[confirmed, death, recovered]]
+
+    # extract features by feature generators
+    for ts in test_labels:
+        for i in range(len(test_labels[ts])):
+            true_labels[i].append(test_labels[ts][i])
     #####################################################################################################################################
 
     ## Train linear models ##############################################################################################################
@@ -210,7 +240,7 @@ if __name__ == '__main__':
     output_size = 3
     step_size = 10 ** -3
     regu_lam = 10 ** -4
-    epochs = 1000
+    epochs = 700
 
     # build model
     model = mlp_linear(input_size, hidden_size, output_size)
@@ -219,6 +249,7 @@ if __name__ == '__main__':
 
     last_out = None
     min_loss = np.inf
+    confirmed_errs, death_errs, recovered_errs = list(), list(), list()
     # training
     for epoch in range(epochs):
         model.zero_grad()
@@ -232,19 +263,31 @@ if __name__ == '__main__':
         
         if epoch % 10 == 0:
             print('epoch {}, loss {}'.format(epoch, loss.item()))
+        
+        # check error on test each epoch
+        # confirmed_err, death_err, recovered_err = model_eval(model, feature_generators, test_samples, true_labels, [], regions, last_out, labels, train_len, covars_train, covars_test)
+        # confirmed_errs.append(confirmed_err)
+        # death_errs.append(death_err)
+        # recovered_errs.append(recovered_err)
     
+    # plt.plot([i for i in range(epochs)], confirmed_errs)
+    # plt.show()
+    # plt.plot([i for i in range(epochs)], death_errs)
+    # plt.show()
+    # plt.plot([i for i in range(epochs)], recovered_errs)
+    # plt.show()
+
     last_out = [i for i in last_out]
     labels = [i for i in labels.detach().numpy()]
     #####################################################################################################################################
 
     #### model eval #####################################################################################################################
-    true_labels = [list() for i in range(len(test_labels['confirmed']))] # [[confirmed, death, recovered]]
-
-    # extract features by feature generators
-    for ts in test_labels:
-        for i in range(len(test_labels[ts])):
-            true_labels[i].append(test_labels[ts][i])
-    
+    check = regions
+    #check = ['China_Beijing', 'China_Chongqing', 'China_Sichuan', 'China_Hainan', 'US_nan', 'Russia_nan', 'Japan_nan', 'Korea, South_nan']
+    #check = []    
     confirmed_err, death_err, recovered_err = model_eval(model, feature_generators, test_samples, true_labels, check, regions, last_out, labels, train_len, covars_train, covars_test)
 
+    print('confirmed err', confirmed_err)
+    print('death err', death_err)
+    print('recovered err', recovered_err)
     #####################################################################################################################################
