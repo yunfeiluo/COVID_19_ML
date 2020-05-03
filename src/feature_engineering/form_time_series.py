@@ -20,6 +20,9 @@ def get_time_series_data():
         key = str(row['Country/Region'])+'_'+str(row['Province/State'])
         confirmed = [i for i in row.values][4:]
         diff_confirmed = [confirmed[0]] + [confirmed[i] - confirmed[i-1] for i in range(1, len(confirmed))]
+        for i in range(len(diff_confirmed)):
+            if diff_confirmed[i] < 0:
+                diff_confirmed[i] = 0
         ts[key] = [diff_confirmed] # e.g. China_Beijing, 3d array [confirmed, death, recovered]
     
     # extract death time series
@@ -29,6 +32,9 @@ def get_time_series_data():
         key = str(row['Country/Region'])+'_'+str(row['Province/State'])
         death = [i for i in row.values][4:]
         diff_death = [death[0]] + [death[i] - death[i-1] for i in range(1, len(death))]
+        for i in range(len(diff_death)):
+            if diff_death[i] < 0:
+                diff_death[i] = 0
         try:
             ts[key].append(diff_death) # e.g. China_Beijing, 3d array [confirmed, death, recovered]
         except:
@@ -41,6 +47,9 @@ def get_time_series_data():
         key = str(row['Country/Region'])+'_'+str(row['Province/State'])
         recover = [i for i in row.values][4:]
         diff_recover = [recover[0]] + [recover[i] - recover[i-1] for i in range(1, len(recover))]
+        for i in range(len(recover)):
+            if diff_recover[i] < 0:
+                diff_recover[i] = 0
         try:
             ts[key].append(diff_recover) # e.g. China_Beijing, 3d array [confirmed, death, recovered]
         except:
