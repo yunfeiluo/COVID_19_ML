@@ -1,4 +1,4 @@
-国家 | 总GDP | 人均GDP | 人口密度 | 人均寿命
+Country | total_GDP | GDP_per_capita | population_density | life_expectancy 
 Afghanistan 20682000000.0 531.2838 0.059627402505897126 64.486
 Albania 17210000000.0 5980.2689 0.10502908759124088 78.458
 Algeria 193000000000.0 4402.5406 0.01841134800607959 76.693
