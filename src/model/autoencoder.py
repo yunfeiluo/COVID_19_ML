@@ -53,13 +53,14 @@ def train_dense_mlp_autoencoder(train_samples):
     print('bottleneck_size', bottleneck_size)
     step_size = 10 ** -3
     regu_lam = 10 ** -4
-    epochs = 500
+    epochs = 750
     
     # build model
     model = dense_mlp_autoencoder(input_size, hidden_size, bottleneck_size)
     loss_func = nn.MSELoss()
     opt = optim.Adam(params=model.parameters(), lr=step_size, weight_decay=regu_lam)
 
+    loss_epoch = list()
     # training
     print('####### Start training linear mlp autoencoder ###############')
     for epoch in range(epochs):
@@ -69,9 +70,14 @@ def train_dense_mlp_autoencoder(train_samples):
         loss.backward()
         opt.step()
         
-        if epoch % 10 == 0:
-            print('epoch {}, loss {}'.format(epoch, loss.item()))
+        # validation
+        # test_out = model(test_samples)
+        # test_loss = loss_func(test_out, test_samples)
+        # loss_epoch.append(test_loss.item())
     
+    # plt.plot([i for i in range(epochs)], loss_epoch)
+    # plt.show()
+
     # # validation
     # test_out = model(test_samples)
     # loss = loss_func(test_out, test_samples)
