@@ -4,8 +4,7 @@
 
 # Main tasks 
 - Find useful features, e.g. GDP of region the country belongs to, population density, life expectancy, etc. for cases Forcasting 
-- Try different methods for dimension reduction 
-- build reasonable models 
+- Build reasonable models for forcasting 
 
 # Analysis log 
 - split data into samples and labels in a ways that using the previous days (depend on the window size, 14 for current experiment) as features, and the upcoming day as label 
