@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 
 from src.model.mlp import mlp_linear
 import src.model.autoencoder as autoencoder
+import src.model.lstm_autoencoder as lstm_autoencoder
 
 def compute_MAE(y_pred, y_true):
     diff = np.abs(np.array(y_pred) - np.array(y_true))
@@ -36,7 +37,7 @@ def model_eval(model, feature_generators, test_samples, true_labels, check, regi
         y_true = true_labels[i]
         y_pred = [list() for i in range(3)]
         future_pred = [list() for i in range(3)]
-        pred_len = 7
+        pred_len = 7 # determine how many days of forcasting (don't have label!)
 
         for j in range(len(test_labels['confirmed'][i]) + pred_len):
             # generate features by feature generators
@@ -122,7 +123,8 @@ def train_feature_generator(train_samples, train_labels, ts_name):
     feature_generators = dict()
     for ts in ts_name:
         print('generator for', ts)
-        feature_generator = autoencoder.train_dense_mlp_autoencoder(train_samples[ts])
+        #feature_generator = autoencoder.train_dense_mlp_autoencoder(train_samples[ts])
+        feature_generator = lstm_autoencoder.train_lstm_autoencoder(train_samples[ts])
         feature_generators[ts] = feature_generator
 
     with open('src/model/feature_generators.pkl', 'wb') as f:
@@ -196,7 +198,7 @@ if __name__ == '__main__':
     #####################################################################################################################################
 
     ## train feature generator ##########################################################################################################
-    #train_feature_generator(train_samples, train_labels, ts_name)
+    train_feature_generator(train_samples, train_labels, ts_name)
     feature_generators = None
     with open('src/model/feature_generators.pkl', 'rb') as f:
         feature_generators = pickle.load(f)

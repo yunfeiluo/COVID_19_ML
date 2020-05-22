@@ -34,18 +34,27 @@ class dense_mlp_autoencoder(nn.Module):
 
 def train_dense_mlp_autoencoder(train_samples):
     random.shuffle(train_samples)
-    #test_len = int(len(train_samples) * 0.2)
-    test_len = 0
+    test_len = int(len(train_samples) * 0.2)
+    #test_len = 0
     print('num of test', test_len)
 
-    samples = train_samples[:len(train_samples)-test_len]
+    # reshape test_samples to be (batch size, sequence length, input dimension)
+    # reshaped_samples = list()
+    # for sample in train_samples:
+    #     re_sample = list()
+    #     for step in sample:
+    #         re_sample.append([step])
+    #     reshaped_samples.append(re_sample)
+    reshaped_samples = train_samples # if don't reshape
+
+    samples = reshaped_samples[:len(reshaped_samples)-test_len]
     #samples = preprocessing.normalize(samples)
     samples = torch.Tensor(samples).float()
     samples = autograd.Variable(samples).float()
 
-    test_samples = torch.Tensor(train_samples[len(train_samples)-test_len:]).float()
+    test_samples = torch.Tensor(reshaped_samples[len(reshaped_samples)-test_len:]).float()
 
-    input_size = len(train_samples[0])
+    input_size = len(reshaped_samples[0])
     # hyper-param
     hidden_size = 128
     reduction_factor = 0.3
@@ -53,12 +62,14 @@ def train_dense_mlp_autoencoder(train_samples):
     print('bottleneck_size', bottleneck_size)
     step_size = 10 ** -3
     regu_lam = 10 ** -4
-    epochs = 750
+    epochs = 1 # 750
     
     # build model
     model = dense_mlp_autoencoder(input_size, hidden_size, bottleneck_size)
     loss_func = nn.MSELoss()
     opt = optim.Adam(params=model.parameters(), lr=step_size, weight_decay=regu_lam)
+
+    print('input shape', samples.shape)
 
     loss_epoch = list()
     # training
@@ -66,11 +77,12 @@ def train_dense_mlp_autoencoder(train_samples):
     for epoch in range(epochs):
         model.zero_grad()
         out = model(samples)
+        print('output shape', out.shape)
         loss = loss_func(out, samples)
         loss.backward()
         opt.step()
         
-        # validation
+        # validation, for inspecting proper epoch nums
         # test_out = model(test_samples)
         # test_loss = loss_func(test_out, test_samples)
         # loss_epoch.append(test_loss.item())
@@ -78,18 +90,19 @@ def train_dense_mlp_autoencoder(train_samples):
     # plt.plot([i for i in range(epochs)], loss_epoch)
     # plt.show()
 
-    # # validation
-    # test_out = model(test_samples)
-    # loss = loss_func(test_out, test_samples)
-    # print('test loss', loss.item())
-    # test_out = test_out.detach().numpy()
-    # test_samples = test_samples.detach().numpy()
+    ###################
+    # validation
+    test_out = model(test_samples)
+    loss = loss_func(test_out, test_samples)
+    print('test loss', loss.item())
+    test_out = test_out.detach().numpy()
+    test_samples = test_samples.detach().numpy()
 
-    # for i in range(len(test_samples)):
-    #     time = [i for i in range(len(test_samples[i]))]
-    #     plt.plot(time, test_samples[i], c='b')
-    #     plt.plot(time, test_out[i], c='r')
-    #     plt.show()
+    for i in range(len(test_samples)):
+        time = [i for i in range(len(test_samples[i]))]
+        plt.plot(time, test_samples[i], c='b')
+        plt.plot(time, test_out[i], c='r')
+        plt.show()
 
     print('######### training complete ###############')
     model.encode_only = True
