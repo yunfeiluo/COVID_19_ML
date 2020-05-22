@@ -23,6 +23,7 @@ def get_time_series_data():
         for i in range(len(diff_confirmed)):
             if diff_confirmed[i] < 0:
                 diff_confirmed[i] = 0
+        diff_confirmed = preprocessing.m
         ts[key] = [diff_confirmed] # e.g. China_Beijing, 3d array [confirmed, death, recovered]
     
     # extract death time series
