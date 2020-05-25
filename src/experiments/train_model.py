@@ -43,13 +43,13 @@ if __name__ == '__main__':
 
     
     # training code
-    #input_size = 3 * lookback # if use linear model
-    input_size = 3
+    input_size = 3 * lookback # if use linear model
+    # input_size = 3 # if use rnn
     # hyper-param
-    hidden_size = 128
+    hidden_size = 64
     output_size = 3
-    step_size = 10 ** -3
-    regu_lam = 10 ** -4
+    step_size = 10 ** -4
+    regu_lam = 10 ** -5
     epochs = 500
     regionalize = False
 

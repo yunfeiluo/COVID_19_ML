@@ -14,22 +14,25 @@ class mlp_linear(nn.Module):
         )
 
     def forward(self, x):
+        x = x.view(len(x), -1)
         return self.sequential_liner(x)
 
 class RNN_layers(nn.Module):
     def __init__(self, input_size, hidden_size, output_size):
         super(RNN_layers, self).__init__()
         self.hidden_size = hidden_size
-        self.rnn1 = nn.RNN(input_size, hidden_size, batch_first=True)
-        self.fc1 = nn.Linear(hidden_size, output_size)
+
+        self.rnn1 = nn.LSTM(input_size, hidden_size, batch_first=True)
+        self.rnn2 = nn.LSTM(hidden_size, output_size, batch_first=True)
 
         self.hidden_cell = (torch.zeros(1,1,self.hidden_size),
                             torch.zeros(1,1,self.hidden_size))
     
     def forward(self, input_seq):
         out, self.hidden_cell = self.rnn1(input_seq)
-        print('out shape after rnn1', out.shape)
-        exit()
+        out, self.hidden_cell = self.rnn2(out)
+        # print('out shape after rnn1', out.shape)
+        return out[:, -1, :]
 
 
 class multitask_mlp(nn.Module):
@@ -40,8 +43,8 @@ class multitask_mlp(nn.Module):
         self.shared_out_size = output_size
         if self.regionalize:
             self.shared_out_size = hidden_size // 2
-        #self.shared_layers = mlp_linear(input_size, hidden_size, self.shared_out_size)
-        self.shared_layers = RNN_layers(input_size, hidden_size, self.shared_out_size)
+        self.shared_layers = mlp_linear(input_size, hidden_size, self.shared_out_size)
+        #self.shared_layers = RNN_layers(input_size, hidden_size, self.shared_out_size)
 
         # "personalized layers for each region"
         dense_layer = dict() # map: region -> corresponding layers

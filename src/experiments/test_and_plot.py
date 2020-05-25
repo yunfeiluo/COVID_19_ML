@@ -30,7 +30,7 @@ if __name__ == '__main__':
             test_input = torch.Tensor([data[region]["test_input"][i:]]).float()
             
             # if use linear model
-            test_input = test_input.view(1, -1)
+            # test_input = test_input.view(1, -1)
             # print("test input shape", test_input.shape)
 
             out = model(region, test_input)
