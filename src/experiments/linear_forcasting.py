@@ -5,8 +5,7 @@ import pickle
 import matplotlib.pyplot as plt
 
 from src.model.mlp import mlp_linear
-import src.model.autoencoder as autoencoder
-import src.model.lstm_autoencoder as lstm_autoencoder
+import src.model.dense_autoencoder as dense_autoencoder
 
 def compute_MAE(y_pred, y_true):
     diff = np.abs(np.array(y_pred) - np.array(y_true))
@@ -123,8 +122,7 @@ def train_feature_generator(train_samples, train_labels, ts_name):
     feature_generators = dict()
     for ts in ts_name:
         print('generator for', ts)
-        #feature_generator = autoencoder.train_dense_mlp_autoencoder(train_samples[ts])
-        feature_generator = lstm_autoencoder.train_lstm_autoencoder(train_samples[ts])
+        # feature_generator = dense_autoencoder.train_dense_mlp_autoencoder(train_samples[ts])
         feature_generators[ts] = feature_generator
 
     with open('src/model/feature_generators.pkl', 'wb') as f:
@@ -168,6 +166,10 @@ if __name__ == '__main__':
 
     covars_train = list()
     covars_test = list()
+
+    for region in data:
+        # if 'China' not in region:
+        #     continue
 
     for i in range(3):
         for region in data:
@@ -261,6 +263,7 @@ if __name__ == '__main__':
         opt.step()
 
         if loss.item() < min_loss:
+            min_loss = loss.item()
             last_out = out.detach().numpy()
         
         if epoch % 10 == 0:
