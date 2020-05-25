@@ -35,10 +35,10 @@ train_data = dict()
 '''
 @var train_data
 map: region -> {
-                    train_samples: [
+                    samples: [
                                         [[confirmed, death, recovered]]
                                     ], 
-                    test_samples: [
+                    labels: [
                                     [confirmed, death, recovered]
                                 ],
                     cavars: [covars]

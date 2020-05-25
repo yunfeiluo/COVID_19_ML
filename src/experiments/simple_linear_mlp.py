@@ -6,11 +6,6 @@ import random
 import matplotlib.pyplot as plt
 
 from src.model.mlp import mlp_linear
-import src.model.dense_autoencoder as dense_autoencoder
-
-def compute_MAE(y_pred, y_true):
-    diff = np.abs(y_pred - y_true)
-    return np.sum(diff) / len(diff)
 
 if __name__ == '__main__':
     # read data
@@ -43,7 +38,7 @@ if __name__ == '__main__':
         # print(' ')
 
         # test input and labels
-        data[region]["test_input"] = data[region]["samples"][train_len-lookback:train_len]
+        data[region]["test_input"] = data[region]["samples"][train_len - 1]
         data[region]["test_labels"] = data[region]["labels"][train_len:]
 
     
@@ -61,11 +56,9 @@ if __name__ == '__main__':
     loss_func = torch.nn.MSELoss()
     opt = optim.Adam(params=model.parameters(), lr=step_size, weight_decay=regu_lam)
 
-    last_out = dict()
-    min_loss = dict()
     for region in regions:
-        last_out[region] = None
-        min_loss[region] = np.inf
+        data[region]["last_out"] = None
+        data[region]["min_loss"] = np.inf
     # training
     for epoch in range(epochs):
         acc = 0
@@ -80,9 +73,9 @@ if __name__ == '__main__':
 
             acc += loss.item()
 
-            if loss.item() < min_loss[region]:
-                min_loss[region] = loss.item()
-                last_out[region] = out.detach().numpy()
+            if loss.item() < data[region]["min_loss"]:
+                data[region]["min_loss"] = loss.item()
+                data[region]["last_out"] = out
         
         if epoch % 10 == 0:
             print('epoch {}, loss {}'.format(epoch, acc / len(regions)))
