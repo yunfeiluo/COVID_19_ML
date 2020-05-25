@@ -3,6 +3,7 @@ import torch
 from torch import nn, autograd
 import pickle
 import matplotlib.pyplot as plt
+from sklearn.preprocessing import MinMaxScaler
 
 def compute_MAE(y_pred, y_true):
     diff = np.abs(y_pred - y_true)
@@ -43,14 +44,17 @@ if __name__ == '__main__':
     for region in check:
         fig, axs = plt.subplots(1, 3)
         titles = ['confirmed', 'death', 'recovered']
+        last_out = data[region]["scaler"].inverse_transform(data[region]["last_out"].detach().numpy()).tolist()
+        true_signal = data[region]["scaler"].inverse_transform(data[region]["labels"]).tolist()
+        test_out = data[region]["scaler"].inverse_transform(data[region]["test_input"][lookback:]).tolist()
         for j in range(3):
-            true_signal = [i[j] for i in data[region]["labels"]]
-            train_out = [i[j] for i in data[region]["last_out"].detach().numpy().tolist()]
-            axs[j].plot(time[:len(true_signal)], true_signal, label='True_new_cases', c='b')
+            curr_true_signal = [i[j] for i in true_signal]
+            train_out = [i[j] for i in last_out]
+            axs[j].plot(time[:len(true_signal)], curr_true_signal, label='True_new_cases', c='b')
             axs[j].plot(time[:len(train_out)], train_out, label='train_pred', c='g')
 
-            test_out = [i[j] for i in data[region]["test_input"][lookback:]]
-            axs[j].plot(time[len(true_signal)-test_len:], test_out, label='test_pred', c='r')
+            curr_test_out = [i[j] for i in test_out]
+            axs[j].plot(time[len(true_signal)-test_len:], curr_test_out, label='test_pred', c='r')
 
             #axs[j].plot(time[len(time) - pred_len - len(y_pred[j]):len(time) - pred_len], y_pred[j], label='test_pred', c='r')
             #axs[j].plot(time[len(time) - pred_len:], future_pred[j], label='future_pred', c='y')
