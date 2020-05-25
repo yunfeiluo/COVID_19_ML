@@ -33,7 +33,7 @@ if __name__ == '__main__':
             test_input = test_input.view(1, -1)
             # print("test input shape", test_input.shape)
 
-            out = model(test_input)
+            out = model(region, test_input)
             # print('out shape', out.shape)
 
             data[region]["test_input"].append(out.detach().numpy().tolist()[0])

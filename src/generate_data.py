@@ -15,18 +15,18 @@ data = None
 with open('src/feature_engineering/time_series.pkl', 'rb') as f:
     data = pickle.load(f)
 
-# wash data
-covariates = None
-with open('src/feature_engineering/features.pkl', 'rb') as f:
-    covariates = pickle.load(f)
-countries = [i for i in covariates]
-droped = list()
-for region in data:
-    country = region.split('_')[0]
-    if country not in countries:
-        droped.append(region)
-for region in droped:
-    del data[region]
+# # wash data
+# covariates = None
+# with open('src/feature_engineering/features.pkl', 'rb') as f:
+#     covariates = pickle.load(f)
+# countries = [i for i in covariates]
+# droped = list()
+# for region in data:
+#     country = region.split('_')[0]
+#     if country not in countries:
+#         droped.append(region)
+# for region in droped:
+#     del data[region]
 
 # window setting    
 look_back = 14
@@ -42,7 +42,8 @@ map: region -> {
                     labels: [
                                     [confirmed, death, recovered]
                                 ],
-                    cavars: [covars]
+                    cavars: [covars],
+                    scaler: MinMaxScaler obj
                 }
 '''
 
@@ -50,7 +51,8 @@ regions = list()
 
 for region in data:
     regions.append(region)
-    train_data[region] = {"samples": list(), "labels": list(), "covars": covariates[region.split('_')[0]], "scaler": MinMaxScaler()}
+    #train_data[region] = {"samples": list(), "labels": list(), "covars": covariates[region.split('_')[0]], "scaler": MinMaxScaler()}
+    train_data[region] = {"samples": list(), "labels": list(), "scaler": MinMaxScaler()}
     data[region] = np.array(data[region]).T
     train_data[region]["scaler"] = train_data[region]["scaler"].fit(data[region])
     data[region] = train_data[region]["scaler"].transform(data[region]).tolist()
@@ -88,9 +90,9 @@ for key in train_data:
     print(key)
     train_data[key]["samples"] = np.array(train_data[key]["samples"])
     train_data[key]["labels"] = np.array(train_data[key]["labels"])
-    train_data[key]["covars"] = np.array(train_data[key]["covars"])
+    #train_data[key]["covars"] = np.array(train_data[key]["covars"])
 
     print("train shape", train_data[key]["samples"].shape)
     print("label shape", train_data[key]["labels"].shape)
-    print("covar shape", train_data[key]["covars"].shape)
+    #print("covar shape", train_data[key]["covars"].shape)
     print(' ')

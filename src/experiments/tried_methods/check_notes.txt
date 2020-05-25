@@ -1,0 +1,3 @@
+first run src.feature_engineering.form_time_series to read new time series
+
+Then run src.experiments.check_pred to check the prediction
