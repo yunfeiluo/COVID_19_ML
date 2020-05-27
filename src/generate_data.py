@@ -80,7 +80,7 @@ for region in data:
     #     for k in range(len(train_data[region]["samples"])):
     #         train_data[region]["samples"][k] = np.array(train_data[region]["samples"][k]).T.tolist()
 
-filename = 'data/train_data/samples_labels_and_covars.pkl'
+filename = 'data/train_data/newly_generated_data.pkl'
 with open(filename, 'wb') as f:
     print("write to file", filename)
     pickle.dump(train_data, f)
