@@ -51,13 +51,15 @@ if __name__ == '__main__':
     step_size = 10 ** -3
     regu_lam = 10 ** -5
     epochs = 325
-    regionalize = False
+    regionalize = True
 
     best_epochs = list()
+
+    ##### validation ######################
     # for i in range(10):
     random.shuffle(regions)
 
-    val_len = int(0.2 * len(regions))
+    # val_len = int(0.2 * len(regions))
     # train_regions = regions[val_len:]
     # val_regions = regions[:val_len]
     
@@ -109,6 +111,8 @@ if __name__ == '__main__':
 
     best_epochs.append(np.argmin(np.array(val_err)))
     print('best epochs', best_epochs)
+
+    ###############################################
     
     # exit()
     # x = [i for i in range(epochs)]
