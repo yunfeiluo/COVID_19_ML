@@ -43,7 +43,8 @@ if __name__ == '__main__':
 
             out = model(region, test_input).detach().numpy()
             if i < test_len:
-                err += np.abs(data[region]["scaler"].inverse_transform([data[region]["test_labels"][i] - out[0]])[0])
+                # err += np.abs(data[region]["scaler"].inverse_transform([data[region]["test_labels"][i] - out[0]])[0])
+                err += (np.abs(data[region]["test_labels"][i] - out[0]) ** 2)
             # print('out shape', out.shape)
 
             data[region]["test_input"].append(out.tolist()[0])
@@ -53,6 +54,7 @@ if __name__ == '__main__':
     print('death MAE', err[1])
     print('recovered MAE', err[2])
     
+    exit()
     # plotting
     time = [i for i in range(len(data[check[0]]["last_out"]) + test_len + future_pred_len)]
     for region in check:

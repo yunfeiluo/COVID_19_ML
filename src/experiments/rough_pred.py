@@ -40,10 +40,10 @@ if __name__ == '__main__':
     
     # train code
     # hyper params
-    regu_lam = 10 ** 0
+    regu_lam = 10 ** -4
 
-    #model = Ridge(alpha=regu_lam)
-    model = Lasso(alpha=regu_lam)
+    model = Ridge(alpha=regu_lam)
+    #model = Lasso(alpha=regu_lam)
     model.fit(samples, labels)
 
     # test
@@ -61,7 +61,8 @@ if __name__ == '__main__':
             # print("test input shape", test_input.shape)
 
             out = model.predict(test_input)
-            err += np.abs(data[region]["scaler"].inverse_transform([data[region]["test_labels"][i] - out[0]])[0])
+            # err += np.abs(data[region]["scaler"].inverse_transform([data[region]["test_labels"][i] - out[0]])[0])
+            err += (np.abs(data[region]["test_labels"][i] - out[0]) ** 2)
             # print('out shape', out.shape)
 
             data[region]["test_input"].append(out.tolist()[0])

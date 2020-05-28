@@ -50,7 +50,7 @@ if __name__ == '__main__':
     output_size = 3
     step_size = 10 ** -3
     regu_lam = 10 ** -5
-    epochs = 1000
+    epochs = 1200
     regionalize = False
 
     best_epochs = list()

@@ -69,4 +69,6 @@ class multitask_mlp(nn.Module):
         shared_out = self.shared_layers(input_seq)
         if not self.regionalize:
             return self.final_act(shared_out)
+            # return shared_out
         return self.final_act(self.region_dense_layer[region](shared_out))
+        # return self.region_dense_layer[region](shared_out)
