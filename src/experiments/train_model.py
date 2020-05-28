@@ -50,67 +50,67 @@ if __name__ == '__main__':
     output_size = 3
     step_size = 10 ** -3
     regu_lam = 10 ** -5
-    epochs = 1200
+    epochs = 325
     regionalize = False
 
     best_epochs = list()
-    for i in range(10):
-        random.shuffle(regions)
+    # for i in range(10):
+    random.shuffle(regions)
 
-        val_len = int(0.2 * len(regions))
-        train_regions = regions[val_len:]
-        val_regions = regions[:val_len]
+    val_len = int(0.2 * len(regions))
+    # train_regions = regions[val_len:]
+    # val_regions = regions[:val_len]
+    
+    train_regions = regions
+    val_regions = list()
+
+    # build model
+    #model = mlp_linear(input_size, hidden_size, output_size)
+    model = multitask_mlp(regions, input_size, hidden_size, output_size, regionalize=regionalize)
+    loss_func = torch.nn.MSELoss()
+    opt = optim.Adam(params=model.parameters(), lr=step_size, weight_decay=regu_lam)
+
+    for region in regions:
+        data[region]["last_out"] = None
+        data[region]["min_loss"] = np.inf
+
+    train_err = list()
+    val_err = list()
+    # training
+    for epoch in range(epochs):
+        acc = 0
+        for region in train_regions:
+            model.zero_grad()
+            #out = model(data[region]["train_samples"])
+            out = model(region, data[region]["train_samples"])
+            # print('out shape', out.shape)
+            # print('label shape', data[region]["train_labels"].shape)
+            loss = loss_func(out, data[region]["train_labels"])
+            loss.backward()
+            opt.step()
+
+            acc += loss.item()
+
+            if loss.item() < data[region]["min_loss"]:
+                data[region]["min_loss"] = loss.item()
+                data[region]["last_out"] = out
+
+        if epoch % 10 == 0:
+            print('epoch {}, loss {}'.format(epoch, acc))
         
-        # train_regions = regions
-        # val_regions = list()
+        train_err.append(acc)
+        # validation
+        acc = 0
+        for region in val_regions:
+            out = model(region, data[region]["train_samples"])
+            loss = loss_func(out, data[region]["train_labels"])
+            acc += loss.item()
+        val_err.append(acc)
 
-        # build model
-        #model = mlp_linear(input_size, hidden_size, output_size)
-        model = multitask_mlp(regions, input_size, hidden_size, output_size, regionalize=regionalize)
-        loss_func = torch.nn.MSELoss()
-        opt = optim.Adam(params=model.parameters(), lr=step_size, weight_decay=regu_lam)
-
-        for region in regions:
-            data[region]["last_out"] = None
-            data[region]["min_loss"] = np.inf
+    best_epochs.append(np.argmin(np.array(val_err)))
+    print('best epochs', best_epochs)
     
-        train_err = list()
-        val_err = list()
-        # training
-        for epoch in range(epochs):
-            acc = 0
-            for region in train_regions:
-                model.zero_grad()
-                #out = model(data[region]["train_samples"])
-                out = model(region, data[region]["train_samples"])
-                # print('out shape', out.shape)
-                # print('label shape', data[region]["train_labels"].shape)
-                loss = loss_func(out, data[region]["train_labels"])
-                loss.backward()
-                opt.step()
-
-                acc += loss.item()
-
-                if loss.item() < data[region]["min_loss"]:
-                    data[region]["min_loss"] = loss.item()
-                    data[region]["last_out"] = out
-
-            if epoch % 10 == 0:
-                print('epoch {}, loss {}'.format(epoch, acc))
-            
-            train_err.append(acc)
-            # validation
-            acc = 0
-            for region in val_regions:
-                out = model(region, data[region]["train_samples"])
-                loss = loss_func(out, data[region]["train_labels"])
-                acc += loss.item()
-            val_err.append(acc)
-
-        best_epochs.append(np.argmin(np.array(val_err)))
-        print('best epochs', best_epochs)
-    
-    exit()
+    # exit()
     # x = [i for i in range(epochs)]
     # plt.plot(x, train_err, label="Train error", c='b')
     # plt.plot(x, val_err, label="Validation error", c='r')

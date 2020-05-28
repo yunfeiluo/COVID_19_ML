@@ -54,7 +54,7 @@ if __name__ == '__main__':
     print('death MAE', err[1])
     print('recovered MAE', err[2])
     
-    exit()
+    # exit()
     # plotting
     time = [i for i in range(len(data[check[0]]["last_out"]) + test_len + future_pred_len)]
     for region in check:

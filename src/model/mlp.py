@@ -22,7 +22,6 @@ class RNN_layers(nn.Module):
         self.hidden_size = hidden_size
 
         self.rnn1 = nn.LSTM(input_size, hidden_size, batch_first=True)
-        self.rnn2 = nn.LSTM(hidden_size, output_size, batch_first=True)
         self.fc1 = nn.Linear(hidden_size, output_size)
 
         self.hidden_cell = (torch.zeros(1,1,self.hidden_size),
@@ -31,10 +30,8 @@ class RNN_layers(nn.Module):
     def forward(self, input_seq):
         out, self.hidden_cell = self.rnn1(input_seq)
         # print('out shape after rnn1', out.shape)
-        # out, self.hidden_cell = self.rnn2(out)
         out = self.fc1(out[:, -1, :].view(len(out), -1))
         return out
-        # return out[:, -1, :]
 
 
 class multitask_mlp(nn.Module):
@@ -69,6 +66,4 @@ class multitask_mlp(nn.Module):
         shared_out = self.shared_layers(input_seq)
         if not self.regionalize:
             return self.final_act(shared_out)
-            # return shared_out
         return self.final_act(self.region_dense_layer[region](shared_out))
-        # return self.region_dense_layer[region](shared_out)
