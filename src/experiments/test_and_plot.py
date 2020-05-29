@@ -23,6 +23,7 @@ if __name__ == '__main__':
     print('model path', model_filename)
     with open(model_filename, 'rb') as f:
         model = pickle.load(f)
+    # print(model)
 
     up_to_date_data = None
     with open('data/train_data/newly_generated_data.pkl', 'rb') as f:

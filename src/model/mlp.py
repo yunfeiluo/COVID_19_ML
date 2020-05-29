@@ -21,7 +21,7 @@ class RNN_layers(nn.Module):
         super(RNN_layers, self).__init__()
         self.hidden_size = hidden_size
 
-        self.rnn1 = nn.GRU(input_size, hidden_size, batch_first=True)
+        self.rnn1 = nn.LSTM(input_size, hidden_size, batch_first=True)
         self.fc1 = nn.Linear(hidden_size, output_size)
 
         self.hidden_cell = (torch.zeros(1,1,self.hidden_size),
