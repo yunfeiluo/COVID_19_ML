@@ -14,12 +14,12 @@ if __name__ == '__main__':
 
     # read model and data
     data = None
-    data_filename = 'data/train_data/train_out/train_and_test.pkl'
+    data_filename = 'data/train_data/train_out/gm_net_train_and_test.pkl'
     with open(data_filename, 'rb') as f:
         data = pickle.load(f)
     
     model = None
-    model_filename = 'data/models/simple_mlp.pkl'
+    model_filename = 'data/models/gm_net_325epoch_-3lr_128hidden.pkl'
     print('model path', model_filename)
     with open(model_filename, 'rb') as f:
         model = pickle.load(f)
@@ -29,11 +29,14 @@ if __name__ == '__main__':
     with open('data/train_data/newly_generated_data.pkl', 'rb') as f:
         up_to_date_data = pickle.load(f)
     
+    print("newly added days", len(up_to_date_data[check[0]]["labels"]) - len(data[check[0]]["labels"]))
     # testing and predictin
     future_pred_len = 30
     err = np.array([0.0, 0.0, 0.0])
+    future_err = np.array([0.0, 0.0, 0.0])
     lookback = len(data[check[0]]["test_input"])
     test_len = len(data[check[0]]["test_labels"])
+    train_len = len(data[check[0]]["train_labels"])
     for region in data:
         for i in range(test_len + future_pred_len):
             test_input = torch.Tensor([data[region]["test_input"][i:]]).float()
@@ -46,16 +49,30 @@ if __name__ == '__main__':
             if i < test_len:
                 # err += np.abs(data[region]["scaler"].inverse_transform([data[region]["test_labels"][i] - out[0]])[0])
                 err += (np.abs(data[region]["test_labels"][i] - out[0]) ** 2)
+            else:
+                try:
+                    future_err += (np.abs(np.array(up_to_date_data[region]["labels"][train_len + i]) - out[0]) ** 2)
+                except:
+                    curr = None
             # print('out shape', out.shape)
 
             data[region]["test_input"].append(out.tolist()[0])
         #exit()
     err /= len(data)
+    future_err /= len(data)
+    print('test err: ')
     print('confirmed MAE', err[0])
     print('death MAE', err[1])
     print('recovered MAE', err[2])
+    print(' ')
+
+    print('future test err: ')
+    print('confirmed MAE', future_err[0])
+    print('death MAE', future_err[1])
+    print('recovered MAE', future_err[2])
+    print(' ')
     
-    # exit()
+    exit()
     # plotting
     time = [i for i in range(len(data[check[0]]["last_out"]) + test_len + future_pred_len)]
     for region in check:

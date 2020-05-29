@@ -62,24 +62,7 @@ for region in data:
         train_data[region]["samples"].append(data[region][j:j+look_back])
         train_data[region]["labels"].append(data[region][j+look_back])
 
-
-    # for i in range(3):
-    #     train_x = data[region][i]
-        
-    #     # append train data
-    #     train_len = len(train_x) - 1 - look_back
-    #     for j in range(train_len):
-    #         if i == 0:
-    #             train_data[region]["samples"].append([train_x[j:j+look_back], list(), list()])
-    #             train_data[region]["labels"].append([train_x[j+look_back], -1, -1])
-    #         else:
-    #             train_data[region]["samples"][j][i] = train_x[j:j+look_back]
-    #             train_data[region]["labels"][j][i] = train_x[j+look_back]
-        
-    #     # reshape
-    #     for k in range(len(train_data[region]["samples"])):
-    #         train_data[region]["samples"][k] = np.array(train_data[region]["samples"][k]).T.tolist()
-
+# write to file
 filename = 'data/train_data/newly_generated_data.pkl'
 with open(filename, 'wb') as f:
     print("write to file", filename)
