@@ -1,0 +1,6 @@
+run 
+    src.feature_engineering.form_time_series
+to fetch the up-to-date data
+
+Then run this file to generate the samples, labels, and covars. 
+More details see comments for variable: train_data

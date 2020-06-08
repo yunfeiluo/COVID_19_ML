@@ -14,12 +14,12 @@ if __name__ == '__main__':
 
     # read model and data
     data = None
-    data_filename = 'data/train_data/train_out/gm_net_train_and_test.pkl'
+    data_filename = 'data/train_data/train_out/mlp_train_and_test.pkl'
     with open(data_filename, 'rb') as f:
         data = pickle.load(f)
     
     model = None
-    model_filename = 'data/models/gm_net_325epoch_-3lr_128hidden.pkl'
+    model_filename = 'data/models/gm_net_325epoch_-3lr_64hidden.pkl'
     print('model path', model_filename)
     with open(model_filename, 'rb') as f:
         model = pickle.load(f)
