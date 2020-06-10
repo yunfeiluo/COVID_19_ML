@@ -19,7 +19,7 @@ if __name__ == '__main__':
         data = pickle.load(f)
     
     model = None
-    model_filename = 'data/models/gm_net_325epoch_-3lr_64hidden.pkl'
+    model_filename = 'data/models/mlp_100epoch_-4lr_64hidden.pkl'
     print('model path', model_filename)
     with open(model_filename, 'rb') as f:
         model = pickle.load(f)
@@ -72,7 +72,7 @@ if __name__ == '__main__':
     print('recovered MAE', future_err[2])
     print(' ')
     
-    exit()
+    #exit()
     # plotting
     time = [i for i in range(len(data[check[0]]["last_out"]) + test_len + future_pred_len)]
     for region in check:
