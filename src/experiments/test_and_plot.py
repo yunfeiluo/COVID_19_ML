@@ -10,16 +10,16 @@ def compute_MAE(y_pred, y_true):
     return np.sum(diff) / len(diff)
 
 if __name__ == '__main__':
-    check = ['China_Beijing', 'China_Chongqing', 'China_Sichuan', 'China_Hainan', 'US_nan', 'Russia_nan', 'Japan_nan', 'Korea, South_nan']
-
+    # check = ['China_Beijing', 'China_Chongqing', 'China_Sichuan', 'China_Hainan', 'US_nan', 'Russia_nan', 'Japan_nan', 'Korea, South_nan']
+    check = ['China_Beijing', 'China_Chongqing', 'US_nan', 'Russia_nan', 'Japan_nan', 'Korea, South_nan']
     # read model and data
     data = None
-    data_filename = 'data/train_data/train_out/mlp_train_and_test.pkl'
+    data_filename = 'data/train_data/train_out/gm_net_train_and_test.pkl'
     with open(data_filename, 'rb') as f:
         data = pickle.load(f)
     
     model = None
-    model_filename = 'data/models/mlp_100epoch_-4lr_64hidden.pkl'
+    model_filename = 'data/models/gm_net_325epoch_-3lr_64hidden.pkl'
     print('model path', model_filename)
     with open(model_filename, 'rb') as f:
         model = pickle.load(f)
