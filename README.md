@@ -1,5 +1,5 @@
 # COVID_19_ML 
-- Machine learning Research Project 
+- Machine learning Research Project, here is the link to report, https://github.com/yunfeiluo/yunfeiluo.github.io/blob/master/articles/projects/Covid-19%20Cases%20Forecasting,%20Machine%20Learning%20Project,%202020,%20Project%20Report.pdf  
 - Cases data from JHU, more details about it see another repository, https://github.com/CSSEGISandData/COVID-19  
 
 # Main tasks 
